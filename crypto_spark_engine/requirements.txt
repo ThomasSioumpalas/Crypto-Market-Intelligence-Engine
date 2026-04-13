@@ -1,0 +1,16 @@
+# Core
+pyspark==3.5.0
+delta-spark==3.1.0
+
+# Data / API
+requests==2.31.0
+pandas==2.1.4
+pyarrow==14.0.2      # Required for Pandas UDFs (Arrow-based serialization)
+
+# Testing
+pytest==7.4.4
+pytest-timeout==2.2.0
+
+# Optional: for local notebook exploration
+jupyter==1.0.0
+notebook==7.0.6

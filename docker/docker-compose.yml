@@ -1,0 +1,57 @@
+services:
+  spark-master:
+    image: apache/spark:3.5.1-python3
+    container_name: spark-master
+    entrypoint: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    environment:
+      SPARK_MASTER_HOST: spark-master
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    volumes:
+      - ../data:/opt/spark/data
+      - ../src:/opt/spark/src
+    networks:
+      - spark-network
+
+  spark-worker:
+    image: apache/spark:3.5.1-python3
+    container_name: spark-worker-1
+    entrypoint: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    environment:
+      SPARK_WORKER_MEMORY: 2g
+      SPARK_WORKER_CORES: 2
+    depends_on:
+      - spark-master
+    volumes:
+      - ../data:/opt/spark/data
+      - ../src:/opt/spark/src
+    networks:
+      - spark-network
+
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter
+    container_name: jupyter-pyspark
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      PYSPARK_SUBMIT_ARGS: >-
+        --master spark://spark-master:7077
+        --packages io.delta:delta-spark_2.12:3.2.0
+        pyspark-shell
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+    volumes:
+      - ../:/home/jovyan/project
+    depends_on:
+      - spark-master
+      - spark-worker
+    networks:
+      - spark-network
+
+networks:
+  spark-network:
+    driver: bridge
